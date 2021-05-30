@@ -7,9 +7,9 @@ import plotly.express as px
 from operator import itemgetter
 
 class BayesianValidation(object):
-    def __init__(self,pdbid):
-        cif_data = self.get_coordinates(pdbid)
-        self.calculate_distance_matrix(cif_data)
+    def __init__(self,pdbid,atom):
+        cif_data = self.get_coordinates(pdbid,atom)
+        self.calculate_distance_matrix(cif_data,pdbid,atom)
     @staticmethod
     def get_pdb(pdb_id):
         cmd = 'wget https://files.rcsb.org/download/{}.cif -O ../data/cif/{}.cif'.format(pdb_id, pdb_id)
@@ -20,18 +20,28 @@ class BayesianValidation(object):
         cmd = 'wget http://rest.bmrb.io/bmrb/{}/nmr-star3 -O ./data/star/{}.str'.format(bmrb_id, bmrb_id)
         os.system(cmd)
 
-    def calculate_distance_matrix(self,cif_data):
+    def calculate_distance_matrix(self,cif_data,pdbid,atom):
         seq_id = sorted([i for i in cif_data[1].keys()],key=itemgetter(1, 0))
         mm=[]
         for m in cif_data.keys():
             d=[]
+            fo=open('../data/output/{}_{}_{}.txt'.format(pdbid,atom,m),'w')
             for i in seq_id:
                 d.append([])
                 for j in seq_id:
-                    d[-1].append(round(self.get_distance(cif_data[m][i],cif_data[m][j]),4))
+                    dist=round(self.get_distance(cif_data[m][i],cif_data[m][j]),4)
+                    d[-1].append(dist)
+                    if j!= seq_id[-1]:
+                        fo.write('{},'.format(dist))
+                    else:
+                        fo.write('{}\n'.format(dist))
+            fo.close()
+
             mm.append(d)
         meam_mat=[]
         sd_mat=[]
+        fo1 = open('../data/output/{}_{}_meam.txt'.format(pdbid, atom),'w')
+        fo2 = open('../data/output/{}_{}_std.txt'.format(pdbid, atom),'w')
         for i in range(len(mm[0][0])):
             meam_mat.append([])
             sd_mat.append([])
@@ -39,13 +49,22 @@ class BayesianValidation(object):
                 d1=[]
                 for k in range(len(mm)):
                     d1.append(mm[k][i][j])
-                meam_mat[-1].append(round(numpy.mean(d1),4))
-                sd_mat[-1].append(round(numpy.std(d1),4))
+                mn=round(numpy.mean(d1),4)
+                sd=round(numpy.std(d1),4)
+                meam_mat[-1].append(mn)
+                sd_mat[-1].append(sd)
+                if j < len(mm[0][0])-1:
+                    fo1.write('{},'.format(mn))
+                    fo2.write('{},'.format(sd))
+                else:
+                    fo1.write('{}\n'.format(mn))
+                    fo2.write('{}\n'.format(sd))
         fig1=px.imshow(meam_mat)
         fig2=px.imshow(sd_mat)
         fig1.show()
         fig2.show()
-
+        fo1.close()
+        fo2.close()
 
     @staticmethod
     def get_distance(c1, c2):
@@ -127,4 +146,4 @@ class BayesianValidation(object):
         pass
 
 if __name__ == "__main__":
-    p=BayesianValidation('2K2E')
+    p=BayesianValidation('4FPW','CA')
