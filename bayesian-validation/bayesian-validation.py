@@ -7,9 +7,9 @@ import plotly.express as px
 from operator import itemgetter
 
 class BayesianValidation(object):
-    def __init__(self,pdbid,atom):
+    def __init__(self,pdbid,atom,outdir='../data/output'):
         cif_data = self.get_coordinates(pdbid,atom)
-        self.calculate_distance_matrix(cif_data,pdbid,atom)
+        self.calculate_distance_matrix(cif_data,pdbid,atom,outdir)
     @staticmethod
     def get_pdb(pdb_id):
         cmd = 'wget https://files.rcsb.org/download/{}.cif -O ../data/cif/{}.cif'.format(pdb_id, pdb_id)
@@ -20,12 +20,16 @@ class BayesianValidation(object):
         cmd = 'wget http://rest.bmrb.io/bmrb/{}/nmr-star3 -O ./data/star/{}.str'.format(bmrb_id, bmrb_id)
         os.system(cmd)
 
-    def calculate_distance_matrix(self,cif_data,pdbid,atom):
+    def calculate_distance_matrix(self,cif_data,pdbid,atom,outdir):
         seq_id = sorted([i for i in cif_data[1].keys()],key=itemgetter(1, 0))
         mm=[]
         for m in cif_data.keys():
             d=[]
-            fo=open('../data/output/{}_{}_{}.txt'.format(pdbid,atom,m),'w')
+            if not os.path.isdir('{}/{}'.format(outdir,pdbid)):
+                os.system('mkdir {}/{}'.format(outdir,pdbid))
+            if not os.path.isdir('{}/{}/{}'.format(outdir,pdbid,atom)):
+                os.system('mkdir {}/{}/{}'.format(outdir,pdbid,atom))
+            fo=open('{}/{}/{}/{}_{}_{}.txt'.format(outdir,pdbid,atom,pdbid,atom,m),'w')
             for i in seq_id:
                 d.append([])
                 for j in seq_id:
@@ -40,8 +44,10 @@ class BayesianValidation(object):
             mm.append(d)
         meam_mat=[]
         sd_mat=[]
-        fo1 = open('../data/output/{}_{}_meam.txt'.format(pdbid, atom),'w')
-        fo2 = open('../data/output/{}_{}_std.txt'.format(pdbid, atom),'w')
+        fo1 = open('{}/{}/{}/{}_{}_mean.txt'.format(outdir,pdbid,atom,pdbid, atom),'w')
+        fo2 = open('{}/{}/{}/{}_{}_std.txt'.format(outdir,pdbid,atom,pdbid, atom),'w')
+        htmlout1='{}/{}/{}/{}_{}_mean.html'.format(outdir,pdbid,atom,pdbid, atom)
+        htmlout2='{}/{}/{}/{}_{}_std.html'.format(outdir,pdbid,atom,pdbid, atom)
         for i in range(len(mm[0][0])):
             meam_mat.append([])
             sd_mat.append([])
@@ -61,8 +67,10 @@ class BayesianValidation(object):
                     fo2.write('{}\n'.format(sd))
         fig1=px.imshow(meam_mat)
         fig2=px.imshow(sd_mat)
-        fig1.show()
-        fig2.show()
+        fig1.write_html(htmlout1)
+        fig2.write_html(htmlout2)
+        #fig1.show()
+        #fig2.show()
         fo1.close()
         fo2.close()
 
@@ -140,10 +148,11 @@ class BayesianValidation(object):
         return pdb_models
 
 
-    def read_cif(self,cif_file):
-        pass
-    def distance_matrix(self,coordinates):
-        pass
-
 if __name__ == "__main__":
-    p=BayesianValidation('4FPW','CA')
+    #p=BayesianValidation('4FPW','CA')
+    f=open('../data/xray_nmr_pair.csv','r').read().split("\n")[:-1]
+    for l in f:
+        pair=l.split(",")
+        for atom in ['CA','N','C']:
+            BayesianValidation(pair[0],atom)
+            BayesianValidation(pair[1],atom)
