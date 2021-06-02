@@ -42,7 +42,7 @@ class BayesianValidation(object):
                     fo.write('{},'.format(diff))
                 else:
                     fo.write('{}\n'.format(diff))
-        out_html='{}/{}-{}_diff_mat.html'.format(x,n,outdir)
+        out_html='{}/{}-{}_diff_mat.html'.format(outdir,x,n)
         fo.close()
         fig=px.imshow(diff_mat)
         fig.write_html(out_html)
