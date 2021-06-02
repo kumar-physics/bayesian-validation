@@ -18,7 +18,7 @@ class BayesianValidation(object):
         self.write_seq_info(x_seq, n_seq, xray,nmr,odir)
         xray_mean=self.calculate_distance_matrix(xray_data,xray,odir,x_seq)
         nmr_mean=self.calculate_distance_matrix(nmr_data, nmr, odir, n_seq)
-        self.cal_difference(xray_mean,nmr_mean,odir)
+        self.cal_difference(xray_mean,nmr_mean,xray,nmr,odir)
 
     def write_seq_info(self,x_seq,n_seq,x,n,outdir):
         out_file='{}/{}-{}_seq_alignment.txt'.format(outdir,x,n)
@@ -29,9 +29,9 @@ class BayesianValidation(object):
         fo.close()
 
 
-    def cal_difference(self,xray_mean,nmr_mean,outdir):
+    def cal_difference(self,xray_mean,nmr_mean,x,n,outdir):
         diff_mat=[]
-        out_mat = '{}/diff_mat.txt'.format(outdir)
+        out_mat = '{}/{}-{}_diff_mat.txt'.format(x,n,outdir)
         fo=open(out_mat,'w')
         for i in range(len(xray_mean)):
             diff_mat.append([])
@@ -42,7 +42,7 @@ class BayesianValidation(object):
                     fo.write('{},'.format(diff))
                 else:
                     fo.write('{}\n'.format(diff))
-        out_html='{}/diff_mat.html'.format(outdir)
+        out_html='{}/{}-{}_diff_mat.html'.format(x,n,outdir)
         fo.close()
         fig=px.imshow(diff_mat)
         fig.write_html(out_html)
@@ -259,11 +259,11 @@ class BayesianValidation(object):
 
 if __name__ == "__main__":
     #p=BayesianValidation('4FPW','CA')
-    # f=open('../data/xray_nmr_pair_single_chain.csv','r').read().split("\n")[:-1]
-    # for l in f:
-    #     pair=l.split(",")
-    #     xray=pair[0]
-    #     nmr=pair[1]
-    #     BayesianValidation(xray,nmr)
-    BayesianValidation('3IDU','2KL6')
+    f=open('../data/xray_nmr_pair_single_chain.csv','r').read().split("\n")[:-1]
+    for l in f:
+        pair=l.split(",")
+        xray=pair[0]
+        nmr=pair[1]
+        BayesianValidation(xray,nmr)
+    # BayesianValidation('3IDU','2KL6')
 
