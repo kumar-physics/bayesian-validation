@@ -31,7 +31,7 @@ class BayesianValidation(object):
 
     def cal_difference(self,xray_mean,nmr_mean,x,n,outdir):
         diff_mat=[]
-        out_mat = '{}/{}-{}_diff_mat.txt'.format(x,n,outdir)
+        out_mat = '{}/{}-{}_diff_mat.txt'.format(outdir,x,n)
         fo=open(out_mat,'w')
         for i in range(len(xray_mean)):
             diff_mat.append([])
